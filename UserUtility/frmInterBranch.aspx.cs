@@ -1,0 +1,861 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Net.Http;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+
+public partial class Vouchers_frmInter : System.Web.UI.Page
+{
+
+    DataTable dtgrdview, dtAccGstin;
+    InterBranchModel objInterBranch;
+    //public static int RangeInd = 0;
+
+
+    DataTable VsdtRange
+    {
+        get { return (DataTable)ViewState["dtRange"]; }
+        set { ViewState["dtRange"] = value; }
+    }
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (GlobalSession.YrCD == null)
+        {
+            Response.Redirect("frmLogin.aspx");
+        }
+        if (!IsPostBack)
+        {
+            txtVoucherDate.Focus();
+            ViewState["VchType"] = 4;
+            ViewState["RangeInd"] = "";
+            //LoadBankAccount();
+            //LoadAccountHead();
+            //LoadNarration();
+            LoadLastVoucherNo();
+            LoadBranchName();
+            ddlBranchList_SelectedIndexChanged(sender, e);
+            SetPayMode();
+        }
+        lblMsg.CssClass = "";
+        lblMsg.Text = "";
+    }
+
+    private void LoadBranchName()
+    {
+        try
+        {
+            objInterBranch = new InterBranchModel()
+            {
+                Ind = 2,
+                OrgID = GlobalSession.OrgID,
+                BrID = GlobalSession.BrID,
+            };
+
+
+            string uri = string.Format("InterBranch/LoadBranchList");
+            DataSet dtBranchList = CommonCls.ApiPostDataSet(uri, objInterBranch);
+            if (dtBranchList.Tables[0].Rows.Count > 0)
+            {
+                ddlBranchList.DataSource = dtBranchList.Tables[0];
+                ddlBranchList.DataTextField = "BranchName";
+                ddlBranchList.DataValueField = "BranchID";
+                ddlBranchList.DataBind();
+
+                if (dtBranchList.Tables[0].Rows.Count > 1)
+                    ddlBranchList.Items.Insert(0, new ListItem("-- Select --", "0000"));
+            }
+
+            if (dtBranchList.Tables[1].Rows.Count > 0)
+            {
+                ddlBankAccount.DataSource = dtBranchList.Tables[1];
+                ddlBankAccount.DataTextField = "AccName";
+                ddlBankAccount.DataValueField = "AccCode";
+                ddlBankAccount.DataBind();
+
+                if (dtBranchList.Tables[0].Rows.Count > 1)
+                    ddlBankAccount.Items.Insert(0, new ListItem("-- Select --", "0000"));
+            }
+            if (dtBranchList.Tables[2].Rows.Count > 0)
+            {
+                VsdtRange = dtBranchList.Tables[2];
+            }
+
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(ex.Message, false);
+        }
+    }
+
+    void SetPayMode()
+    {
+                if (ddlPayMode.SelectedValue == "Cheque")
+        {
+            lblPayModeNo.Text = "Cheque No.";
+            lblPayModeDate.Text = "Cheque Date";
+            txtReceivedNo.MaxLength = 8;
+            txtReceivedNo.CssClass = "numberonly";
+        }
+        else
+        {
+            lblPayModeNo.Text = "UTR No.";
+            lblPayModeDate.Text = "UTR Date";
+            txtReceivedNo.MaxLength = 16;
+            txtReceivedNo.CssClass = "";//.Replace("numberonly", "");
+        }
+        txtReceivedNo.Text = txtReceivedDate.Text = "";
+    }
+
+    void LoadLastVoucherNo() // Last Voucher No Insert
+    {
+        try
+        {
+            objInterBranch = new InterBranchModel()
+            {
+                Ind = 4,
+                OrgID = GlobalSession.OrgID,
+                BrID = GlobalSession.BrID,
+                YrCD = GlobalSession.YrCD,
+                VchType = Convert.ToInt32(ViewState["VchType"]),
+            };
+
+
+            string uri = string.Format("InterBranch/LastVoucherNo");
+            DataTable dtVoucher = CommonCls.ApiPostDataTable(uri, objInterBranch);
+            if (dtVoucher.Rows.Count > 0)
+            {
+                if (dtVoucher.Rows[0]["LastNo"].ToString() == "0")
+                {
+                    return;
+                }
+                txtLastVoucherNo.Text = dtVoucher.Rows[0][0].ToString();
+                lblInvoiceAndDate.Text = "Last Voucher No. & Date : " + dtVoucher.Rows[0]["LastNo"].ToString() + " - " + Convert.ToDateTime(dtVoucher.Rows[0]["LastDate"].ToString()).ToString("dd/MM/yyyy");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(ex.Message, false);
+        }
+    }
+
+    public void ShowMessage(string Message, bool type)
+    {
+        lblMsg.Text = (type ? "<i class='fa fa-check-circle fa-lg'></i> " : "<i class='fa fa-info-circle fa-lg'></i> ") + Message;
+        lblMsg.CssClass = type ? "alert alert-success" : "alert alert-danger";
+    }
+    protected void txtAccountHead_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        try
+        {
+            if (ddlBankAccount.SelectedItem.Value == txtAccountHead.SelectedValue) // Check Account Head & Bank Account.
+            {
+                txtAccountHead.Focus();
+                ShowMessage("Account Head And Bank Account Can Not Be Same.", false);
+                return;
+            }
+
+            if (Convert.ToInt32(txtAccountHead.SelectedItem.Value) <= 0)
+            {
+                ShowMessage("Account Head Not Available", false);
+                return;
+            }
+
+
+            dtAccGstin = (DataTable)(ViewState["dtAccGstin"]);
+            if (dtAccGstin != null)
+            {
+                DataView DVAccGstin = new DataView(dtAccGstin);
+                DVAccGstin.RowFilter = "AccCode=" + txtAccountHead.SelectedItem.Value;
+                DataTable DTFilter = DVAccGstin.ToTable();
+
+                if ((DTFilter.Rows.Count > 0) && (DTFilter.Rows.Count == 1))
+                {
+                    ddlGSTINNo.DataSource = DTFilter;
+                    ddlGSTINNo.DataTextField = "GSTIN";
+                    ddlGSTINNo.DataBind();
+                    ddlGSTINNo.SelectedIndex = 0;
+                }
+                else if (DTFilter.Rows.Count > 1)
+                {
+                    ddlGSTINNo.DataSource = DTFilter;
+                    ddlGSTINNo.DataTextField = "GSTIN";
+                    ddlGSTINNo.DataBind();
+                    ddlGSTINNo.Items.Insert(0, new ListItem("-- Select --", "0000"));
+                    ddlGSTINNo.SelectedIndex = 0;
+                    ddlGSTINNo.Focus();
+                }
+                else
+                {
+                    ddlGSTINNo.DataSource = null;
+                    ddlGSTINNo.DataBind();
+                }
+            }
+            objInterBranch = new InterBranchModel()
+            {
+                Ind = 6,
+                OrgID = GlobalSession.OrgID,
+                BrID = GlobalSession.BrID,
+                YrCD = GlobalSession.YrCD,
+                VchType = Convert.ToInt32(ViewState["VchType"]),
+                AccCode = Convert.ToInt32(txtAccountHead.SelectedItem.Value),
+            };
+            string uri = string.Format("InterBranch/PartySelect");
+            DataSet dsPartySelect = CommonCls.ApiPostDataSet(uri, objInterBranch);
+            if (dsPartySelect.Tables.Count > 0)
+            {
+                divPartySelect.Visible = true; //Party Selection Section Visible
+                btnRegToggle.Visible = false;   //Outstanding Bill UnVisible
+                ddlSecondaryParty.Visible = false; //SecondaryParty UnVisible
+
+                if (dsPartySelect.Tables[0].TableName == "SecondaryParty") //SecondaryParty Visible
+                {
+                    ddlSecondaryParty.Visible = true;
+                    ddlSecondaryParty.DataSource = dsPartySelect;
+                    ddlSecondaryParty.DataTextField = "PartyName";
+                    ddlSecondaryParty.DataValueField = "PartyID";
+                    ddlSecondaryParty.DataBind();
+                }
+                else if (dsPartySelect.Tables[0].TableName == "OutstandingBill") //Outstanding Bill Visible
+                {
+                    btnRegToggle.Visible = true;
+                    CbOutstandingBill.DataSource = dsPartySelect;
+                    CbOutstandingBill.DataTextField = "BillAmt";
+                    CbOutstandingBill.DataValueField = "BillNo";
+                    CbOutstandingBill.DataBind();
+                }
+                else
+                {
+                    divPartySelect.Visible = false;
+                    ddlSecondaryParty.DataSource = CbOutstandingBill.DataSource = null;
+                    ddlSecondaryParty.DataBind(); CbOutstandingBill.DataBind();
+                }
+            }
+            ddlGSTINNo.Focus();
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(lblMsg.Text, false);
+        }
+    }
+    protected void ddlBranchList_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        try
+        {
+            try
+            {
+                objInterBranch = new InterBranchModel()
+                {
+                    Ind = 1,
+                    OrgID = GlobalSession.OrgID,
+                    BrID = Convert.ToInt32(ddlBranchList.SelectedValue),
+                    YrCD = GlobalSession.YrCD,
+
+                };
+
+                string uri = string.Format("InterBranch/AccountHead");
+                DataTable dtAccGstin = CommonCls.ApiPostDataTable(uri, objInterBranch);
+                if (dtAccGstin.Rows.Count > 0)
+                {
+                    ViewState["dtAccGstin"] = dtAccGstin;
+                    DataView dvAccCode = new DataView(dtAccGstin);
+                    DataTable dtAccList = dvAccCode.ToTable(true, "AccCode", "AccName");
+
+                    txtAccountHead.DataSource = dtAccList;
+                    txtAccountHead.DataTextField = "AccName";
+                    txtAccountHead.DataValueField = "AccCode";
+                    txtAccountHead.DataBind();
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessage(ex.Message, false);
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+    }
+    protected void btnAdd_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            lblMsg.Text = lblMsg.CssClass = "";
+            if (ddlBankAccount.SelectedItem.Value == txtAccountHead.SelectedValue) // Check Account Head & Bank Account.
+            {
+                txtAccountHead.Focus();
+                ShowMessage("Account Head And Bank Account Can Not Be Same.", false);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(txtAccountHead.Text)) // For Account Head Not Null Or Empty
+            {
+                txtAccountHead.Focus();
+                ShowMessage("Enter Account Head.", false);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(ddlCrOrDr.SelectedValue)) // For Dr/Cr Amount
+            {
+                ddlCrOrDr.Focus();
+                ShowMessage("Select Dr/Cr Amount.", false);
+                return;
+            }
+
+            try
+            {
+                if (txtAccountHead.SelectedItem.Value == null || Convert.ToInt32(txtAccountHead.SelectedItem.Value) == 0) // For Account Head Code Not Null Or Empty
+                {
+                    txtAccountHead.Focus();
+                    ShowMessage("Account Value Not Available", false);
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+                txtAccountHead.Focus();
+                ShowMessage("Account Value Not Available", false);
+                return;
+            }
+
+            if (ddlGSTINNo.Items.Count > 0)
+            {
+                if (ddlGSTINNo.SelectedItem.Value == "0000")
+                {
+                    ddlGSTINNo.Focus();
+                    ShowMessage("Please Select GSTIN.", false);
+                    return;
+                }
+            }
+
+            if (string.IsNullOrEmpty(txtAmount.Text) || Convert.ToDecimal(txtAmount.Text) <= 0)
+            {
+                txtAmount.Focus();
+                ShowMessage("Please Enter Amount.", false);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(txtInVoiceNo.Text))
+            {
+                if (string.IsNullOrEmpty(txtInvoiceDate.Text))
+                {
+                    txtInvoiceDate.Focus();
+                    ShowMessage("Please Select Invoice Date.", false);
+                    return;
+                }
+                bool ValidDate = CommonCls.CheckFinancialYrDate(txtInvoiceDate.Text, "01/01/2000", DateTime.Now.ToString("dd/MM/yyyy"));
+                if (!ValidDate) // For Voucher Date Between Financial Year.
+                {
+                    ShowMessage("Invoice Date Should Be Within Financial Year Date Or Not More Than Todays Date!", false);
+                    txtInvoiceDate.Focus();
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(txtInvoiceDate.Text))
+            {
+                if (string.IsNullOrEmpty(txtInVoiceNo.Text))
+                {
+                    txtInVoiceNo.Focus();
+                    ShowMessage("Please Select Invoice No.", false);
+                    return;
+                }
+                bool ValidDate = CommonCls.CheckFinancialYrDate(txtInvoiceDate.Text, "01/01/2000", DateTime.Now.ToString("dd/MM/yyyy"));
+                if (!ValidDate) // For Voucher Date Between Financial Year.
+                {
+                    ShowMessage("Invoice Date Should Be Within Financial Year Date Or Not More Than Todays Date!", false);
+                    txtInvoiceDate.Focus();
+                    return;
+                }
+            }
+
+            // Disable Select If Alerady Exist AccountHead
+            int InvoiceNo = CommonCls.ConvertIntZero(txtInVoiceNo.Text);
+            dtgrdview = (DataTable)ViewState["grdData"];
+            if (dtgrdview != null && dtgrdview.Rows.Count > 0)
+            {
+                DataRow[] rows = dtgrdview.Select("AccHeadValue=" + txtAccountHead.SelectedItem.Value + " AND  InvoiceNo=" + InvoiceNo);
+                if (rows.Count() >= 1)
+                {
+                    txtAccountHead.Focus();
+                    ShowMessage("This Account Head With Given Invoice No. Already Exist.", false);
+                    return;
+                }
+            }
+
+            if (ViewState["grdData"] == null)
+            {
+                CreatGridDt();
+            }
+            else
+            {
+                dtgrdview = (DataTable)ViewState["grdData"];
+            }
+
+            int Isvalid = 0;
+            int RangeFrom = CommonCls.ConvertIntZero(VsdtRange.Rows[0]["BankFrom"].ToString());
+            int RangeTo = CommonCls.ConvertIntZero(VsdtRange.Rows[0]["BankTo"].ToString());
+            if (gvInterBranch.Rows.Count == 0)
+            {
+                Isvalid = 0;
+
+                if (CommonCls.ConvertIntZero(txtAccountHead.SelectedValue) > RangeFrom && CommonCls.ConvertIntZero(txtAccountHead.SelectedValue) < RangeTo)
+                    ViewState["RangeInd"] = "1";
+                else
+                    ViewState["RangeInd"] = "0";
+
+
+            }
+            else if (gvInterBranch.Rows.Count > 0)
+            {
+                if (ViewState["RangeInd"].ToString() == "1" && (CommonCls.ConvertIntZero(txtAccountHead.SelectedValue) < RangeFrom || CommonCls.ConvertIntZero(txtAccountHead.SelectedValue) > RangeTo))
+                {
+                    ShowMessage("You Can't Use Bank And Other Than Bank Accounts On Same Voucher.", false);
+                    Isvalid = 1;
+                    txtAccountHead.Focus();
+                }
+                else if (ViewState["RangeInd"].ToString() == "0" && (CommonCls.ConvertIntZero(txtAccountHead.SelectedValue) > RangeFrom
+                    && CommonCls.ConvertIntZero(txtAccountHead.SelectedValue) < RangeTo))
+                {
+                    ShowMessage("You Can't Use Bank And Other Than Bank Accounts On Same Voucher.", false);
+                    Isvalid = 1;
+                    txtAccountHead.Focus();
+                }
+                //else
+                //{
+                //    ShowMessage("", false);
+                //    Isvalid = 0;
+                //}
+
+            }
+
+            if (Isvalid == 0)
+            {
+                DataRow dr = dtgrdview.NewRow();
+                dr["AcctHeadText"] = txtAccountHead.SelectedItem.Text;
+                dr["AccHeadValue"] = txtAccountHead.SelectedItem.Value;
+                dr["GSTIN"] = string.IsNullOrEmpty(ddlGSTINNo.SelectedItem.Value) ? "" : ddlGSTINNo.SelectedItem.Value;
+
+                dr["PartyID"] = ddlSecondaryParty.Items.Count > 0 ?
+                                    !string.IsNullOrEmpty(ddlSecondaryParty.SelectedItem.Value) ?
+                                    ddlSecondaryParty.SelectedItem.Value : "" : "";
+
+                string BillNos = "";
+                for (int i = 0; i < CbOutstandingBill.Items.Count; i++)
+                {
+                    if (CbOutstandingBill.Items[i].Selected)
+                    {
+                        if (i == 0)
+                            BillNos = CbOutstandingBill.Items[i].Value;
+                        else
+                            BillNos += "," + CbOutstandingBill.Items[i].Value;
+                    }
+                }
+
+                dr["BillNos"] = BillNos;
+
+                dr["InvoiceNo"] = InvoiceNo;
+                dr["InvoiceDate"] = txtInvoiceDate.Text;
+                dr["Amount"] = txtAmount.Text;
+                dr["DrCr"] = ddlCrOrDr.SelectedItem.Value;
+                dtgrdview.Rows.Add(dr);
+                ViewState["grdData"] = dtgrdview;
+                gvInterBranch.DataSource = dtgrdview;
+                gvInterBranch.DataBind();
+                CalculateTotalInvoiceAmount();
+                ClearAll();
+                txtAccountHead.Focus();
+                ddlBranchList.Enabled = false;
+
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(ex.Message, false);
+        }
+    }
+
+    void ClearAll()
+    {
+        txtInVoiceNo.Text =
+        txtInvoiceDate.Text =
+        txtAmount.Text =
+        txtNarration.Text =
+        lblMsg.Text = string.Empty;
+        ddlPayMode.ClearSelection();
+        SetPayMode();
+
+        ddlGSTINNo.DataSource = new DataTable(); ddlGSTINNo.DataBind();
+        ddlCrOrDr.ClearSelection();
+        txtAccountHead.ClearSelection();
+        ddlBankAccount.Enabled = true;
+        ddlBranchList.Enabled = true;
+
+    }
+
+    void CalculateTotalInvoiceAmount()
+    {
+        decimal crAmount = 0;
+        decimal drAmount = 0;
+        for (int rowIndex = 0; dtgrdview.Rows.Count > rowIndex; rowIndex++)
+        {
+            string DrCr = dtgrdview.Rows[rowIndex][8].ToString();
+            if (DrCr == "Cr")
+            {
+                crAmount = crAmount + Convert.ToDecimal(dtgrdview.Rows[rowIndex][7]);
+            }
+            else
+            {
+                drAmount = drAmount + Convert.ToDecimal(dtgrdview.Rows[rowIndex][7]);
+            }
+        }
+        txtInvoiceTotalAmount.Text = Convert.ToString(crAmount - drAmount);
+    }
+
+
+    DataTable CreatGridDt() // Create Grid Structure
+    {
+        dtgrdview = new DataTable();
+        dtgrdview.Columns.Add("AccHeadValue", typeof(string));
+        dtgrdview.Columns.Add("AcctHeadText", typeof(string));
+        dtgrdview.Columns.Add("PartyID", typeof(string));
+        dtgrdview.Columns.Add("BillNos", typeof(string));
+        dtgrdview.Columns.Add("GSTIN", typeof(string));
+        dtgrdview.Columns.Add("InvoiceNo", typeof(string));
+        dtgrdview.Columns.Add("InvoiceDate", typeof(string));
+        dtgrdview.Columns.Add("Amount", typeof(string));
+        dtgrdview.Columns.Add("DrCr", typeof(string));
+        return dtgrdview;
+    }
+
+    protected void gvInterBranch_RowCommand(object sender, GridViewCommandEventArgs e)
+    {
+        try
+        {
+            int rowIndex = Convert.ToInt32(e.CommandArgument);
+            if (e.CommandName == "RemoveRow")
+            {
+                dtgrdview = (DataTable)ViewState["grdData"];
+                dtgrdview.Rows[rowIndex].Delete();
+
+                ViewState["grdData"] = dtgrdview;
+                gvInterBranch.DataSource = dtgrdview;
+                gvInterBranch.DataBind();
+
+                CalculateTotalInvoiceAmount();
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(lblMsg.Text, false);
+        }
+    }
+    protected void btnClear_Click(object sender, EventArgs e)
+    {
+
+        try
+        {
+            ClearAll();
+
+            //txtNarration.Dispose();
+            gvInterBranch.DataSource = ViewState["grdData"] = null;
+            gvInterBranch.DataBind();
+
+            txtVoucherDate.Text =
+                txtReceivedDate.Text =
+                txtReceivedNo.Text =
+                txtNarration.Text =
+                txtInvoiceTotalAmount.Text = "";
+            ddlBankAccount.ClearSelection();
+            ddlBranchList.ClearSelection();
+
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(ex.Message, false);
+        }
+    }
+    protected void btnSave_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            if (!CommonCls.CheckGUIDIsValid())
+            {
+                return;
+            }
+            if (ViewState["grdData"] == null || ((DataTable)ViewState["grdData"]).Rows.Count <= 0)
+            {
+                txtVoucherDate.Focus();
+                ShowMessage("Insert Voucher Details!", false);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(txtVoucherDate.Text))
+            {
+                txtVoucherDate.Focus();
+                ShowMessage("Enter Voucher Date!", false);
+                return;
+            }
+
+
+            if (ddlBranchList.SelectedValue == "0000")
+            {
+                ddlBranchList.Focus();
+                ddlBranchList.Enabled = true;
+                ShowMessage("Select City Branch Name", false);
+
+                return;
+            }
+
+            bool ValidDate = CommonCls.CheckFinancialYrDate(txtVoucherDate.Text, GlobalSession.YrStartDate, DateTime.Now.ToString("dd/MM/yyyy"));
+            if (!ValidDate)
+            {
+                txtVoucherDate.Focus();
+                ShowMessage("Voucher Date Should Be Within Financial Year Date!", false);
+                return;
+            }
+
+            if (Convert.ToInt32(ddlBankAccount.SelectedItem.Value) <= 0) // For Bank Account Selection Cumpulsory.
+            {
+                ddlBankAccount.Focus();
+                ShowMessage("Select Bank Account!", false);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(txtReceivedNo.Text))
+            {
+                if (string.IsNullOrEmpty(txtReceivedDate.Text))
+                {
+                    if (ddlPayMode.SelectedValue == "Cheque")
+                    {
+                        ShowMessage("Enter Cheque Date.", false);
+                        return;
+                    }
+                    else if (ddlPayMode.SelectedValue == "UTR")
+                    {
+                        ShowMessage("Enter RTGS/NEFT Date", false);
+                        return;
+                    }
+                }
+
+                bool ReceivedDate = CommonCls.CheckFinancialYrDate(txtReceivedDate.Text, DateTime.Now.AddDays(-89).ToString("dd/MM/yyyy"), DateTime.Now.ToString("dd/MM/yyyy"));
+                if (!ReceivedDate) // For Voucher Date Between Financial Year.
+                {
+                    if (ddlPayMode.SelectedValue == "Cheque")
+                    {
+                        ShowMessage("Cheque Date Should Be Within 3 Months Or Not More Than Todays Date!", false);
+                        return;
+                    }
+                    else if (ddlPayMode.SelectedValue == "UTR")
+                    {
+                        ShowMessage("UTR Date Should Be Within Financial Year And Not More Than Todays Date!", false);
+                        return;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(txtReceivedDate.Text))
+            {
+                if (string.IsNullOrEmpty(txtReceivedNo.Text))
+                {
+                    if (ddlPayMode.SelectedValue == "Cheque")
+                    {
+                        ShowMessage("Enter Cheque No.", false);
+                        return;
+                    }
+                    else if (ddlPayMode.SelectedValue == "UTR")
+                    {
+                        ShowMessage("Enter RTGS/NEFT No.", false);
+                        return;
+                    }
+                }
+
+                bool ReceivedDate = CommonCls.CheckFinancialYrDate(txtReceivedDate.Text, DateTime.Now.AddDays(-89).ToString("dd/MM/yyyy"), DateTime.Now.ToString("dd/MM/yyyy"));
+                if (!ReceivedDate) // For Voucher Date Between Financial Year.
+                {
+                    if (ddlPayMode.SelectedValue == "Cheque")
+                    {
+                        ShowMessage("Cheque Date Should Be Within 3 Months Or Not More Than Todays Date!", false);
+                        return;
+                    }
+                    else if (ddlPayMode.SelectedValue == "UTR")
+                    {
+                        ShowMessage("UTR Date Should Be Within Financial Year And Not More Than Todays Date!", false);
+                        return;
+                    }
+                }
+            }
+
+            dtgrdview = (DataTable)ViewState["grdData"];
+            DataTable dtBranch = InterBranchSchema();
+
+            foreach (DataRow item in dtgrdview.Rows)
+            {
+                DataRow dr = dtBranch.NewRow();                                                  //Data Activity Indication
+                dr["OrgID"] = GlobalSession.OrgID; //Company/End User ID
+                dr["BrID"] = GlobalSession.BrID;   //Branch ID
+                dr["VchType"] = 0;                              //Document/Voucher Type
+                dr["YrCD"] = GlobalSession.YrCD;  //Financial Year Code (2017-17)
+                dr["DocDate"] = CommonCls.ConvertToDate(txtVoucherDate.Text);//Voucher Date
+                dr["DocNo"] = string.IsNullOrEmpty(txtLastVoucherNo.Text) ? 0 : Convert.ToInt32(txtLastVoucherNo.Text);
+                dr["AccCode"] = Convert.ToInt32(item["AccHeadValue"]);  //Selected Account Head Code
+                //  dr["AccGst"] = item["GSTIN"].ToString();                         //Selected Account Head GSTIN No. (If Available)
+                dr["AccCode2"] = Convert.ToInt32(ddlBankAccount.SelectedItem.Value);  //Selected Bank Account Code
+                dr["InterBrID"] = Convert.ToInt32(ddlBranchList.SelectedItem.Value);  //Selected Bank Account Code
+                dr["BankCode"] = Convert.ToInt32(ddlBankAccount.SelectedItem.Value);  //Selected Bank Account Code
+
+
+                //if (!string.IsNullOrEmpty(item["InvoiceNo"].ToString()))
+                //{
+                //    dr["RefNo"] = Convert.ToInt32(item["InvoiceNo"]); //Invoice No.
+                //    dr["RefDate"] = !string.IsNullOrEmpty(item["InvoiceDate"].ToString()) ? CommonCls.ConvertToDate(item["InvoiceDate"].ToString()) : ""; //Invoice Date
+                //}
+
+                if (item["DrCr"].ToString() == "Cr")
+                    dr["AmountCr"] = Convert.ToDecimal(item["Amount"]);  //Dr Amount
+                else
+                    dr["AmountDr"] = Convert.ToDecimal(item["Amount"]);  //Cr Amount	
+                dr["AdvanceInd"] = 0;//item["DrCr"] == "Dr" ? 1 : 0;    //AgainstAdvanceInd (If Receipt Made For Against Advance Taken From Debitor/Creditor Then It Goes 1 Else 0)
+
+                if (ddlPayMode.SelectedValue == "Cheque")
+                {
+                    dr["ChequeNo"] = string.IsNullOrEmpty(txtReceivedNo.Text) ? 0 : Convert.ToInt64(txtReceivedNo.Text);
+                    dr["ChequeDate"] = CommonCls.ConvertToDate(txtReceivedDate.Text);
+                }
+                else if (ddlPayMode.SelectedValue == "UTR")
+                {
+                    dr["UTRNo"] = txtReceivedNo.Text;
+                    dr["UTRDate"] = CommonCls.ConvertToDate(txtReceivedDate.Text);
+                }
+
+                dr["DocDesc"] = txtNarration.Text;                      //Narration
+                dr["EntryType"] = 1;//                                  //EntryType - 1-Entry/2-Ammendment/3-Cancel
+                dr["User"] = GlobalSession.UserID;  //UserID - User ID (Entry By Which User)
+                dr["IP"] = GlobalSession.IP;                           //IPAddress - Client Machine IP Address
+
+                //dr["BillNos"] = item["BillNos"].ToString();
+                //if (Convert.ToInt32(item["PartyID"].ToString()) > 0)
+                //{
+                //    dr["PartyID"] = item["PartyID"].ToString();
+                //}
+
+                dtBranch.Rows.Add(dr);
+            }
+
+            objInterBranch = new InterBranchModel();
+            objInterBranch.Ind = 3;
+            objInterBranch.OrgID = GlobalSession.OrgID;
+            objInterBranch.BrID = GlobalSession.BrID;
+            objInterBranch.VchType = Convert.ToInt32(ViewState["VchType"]);
+            objInterBranch.YrCD = GlobalSession.YrCD;
+
+            if (Convert.ToInt64(txtInvoiceTotalAmount.Text) < 0)
+            {
+                objInterBranch.AmountDr = Convert.ToInt64(txtInvoiceTotalAmount.Text) * -1;
+                objInterBranch.AmountCr = 0;
+            }
+            else if (Convert.ToInt64(txtInvoiceTotalAmount.Text) > 0)
+            {
+                objInterBranch.AmountDr = 0;
+                objInterBranch.AmountCr = Convert.ToInt64(txtInvoiceTotalAmount.Text);
+            }
+
+            objInterBranch.IP = GlobalSession.IP;
+            objInterBranch.DocDesc = txtNarration.Text;
+            objInterBranch.InterBrID = Convert.ToInt32(ddlBranchList.SelectedItem.Value);
+            objInterBranch.BankCode = Convert.ToInt32(ddlBankAccount.SelectedItem.Value);
+            objInterBranch.Dt = dtBranch;
+
+            objInterBranch.AccCode2 = Convert.ToInt32(ddlBankAccount.SelectedItem.Value);
+            objInterBranch.DocDate = CommonCls.ConvertToDate(txtVoucherDate.Text);
+            objInterBranch.AdvanceInd = 0;
+            objInterBranch.EntryType = 1;
+            objInterBranch.User = GlobalSession.UserID;
+            objInterBranch.IP = GlobalSession.IP;
+
+
+            string uri = string.Format("InterBranch/SaveInterBranch");
+            DataTable dtSaveInterBranch = CommonCls.ApiPostDataTable(uri, objInterBranch);
+            if (dtSaveInterBranch.Rows.Count > 0)
+            {
+                if (dtSaveInterBranch.Rows[0]["ReturnInd"].ToString() == "1")
+                {
+                    ddlBankAccount.ClearSelection();
+                    txtInvoiceTotalAmount.Text = "0";
+                    txtReceivedDate.Text = txtReceivedNo.Text = "";
+                    ddlPayMode.ClearSelection();
+                    gvInterBranch.DataSource = null;
+                    gvInterBranch.DataBind();
+                    ViewState["grdData"] = null;
+
+                    txtNarration.Dispose();
+                    ClearAll();
+                    LoadLastVoucherNo();
+
+                    string VoucherNo, VoucherDate;
+                    VoucherNo = dtSaveInterBranch.Rows[0]["DocMaxNo"].ToString();
+                    VoucherDate = Convert.ToDateTime(dtSaveInterBranch.Rows[0]["DocDate"].ToString()).ToString("dd/MM/yyyy");
+
+                    ShowMessage("Record Save Successfully With Voucher No. " + VoucherNo, true);
+                    lblInvoiceAndDate.Text = "Last Voucher No. & Date " + VoucherNo + " - " + VoucherDate;
+
+                    txtVoucherDate.Focus();
+                }
+                else
+                {
+                    ShowMessage("Record Not Save Please Try Again.", false);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            ShowMessage(lblMsg.Text, false);
+        }
+    }
+
+
+    DataTable InterBranchSchema()
+    {
+        DataTable dt = new DataTable();
+        dt.Columns.Add("OrgID", typeof(int));
+        dt.Columns.Add("BrID", typeof(int));
+        dt.Columns.Add("VchType", typeof(int));
+        dt.Columns.Add("YrCD", typeof(int));
+        dt.Columns.Add("DocDate", typeof(string));
+        dt.Columns.Add("DocNo", typeof(int));
+        dt.Columns.Add("AccCode", typeof(int));
+        dt.Columns.Add("AccGst", typeof(string));
+        dt.Columns.Add("AccCode2", typeof(int));
+        dt.Columns.Add("RefNo", typeof(int));
+        dt.Columns.Add("RefDate", typeof(string));
+        dt.Columns.Add("AmountDr", typeof(decimal));
+        dt.Columns.Add("AmountCr", typeof(decimal));
+        dt.Columns.Add("AdvanceInd", typeof(int));
+        dt.Columns.Add("ChequeNo", typeof(int));
+        dt.Columns.Add("ChequeDate", typeof(string));
+        dt.Columns.Add("UTRNo", typeof(string));
+        dt.Columns.Add("UTRDate", typeof(string));
+        dt.Columns.Add("DocDesc", typeof(string));
+        dt.Columns.Add("EntryType", typeof(int));
+        dt.Columns.Add("User", typeof(int));
+        dt.Columns.Add("IP", typeof(string));
+        dt.Columns.Add("InterBrID", typeof(int));
+        dt.Columns.Add("BankCode", typeof(int));
+
+        return dt;
+    }
+    protected void ddlPayMode_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        SetPayMode();
+        txtReceivedNo.Focus();
+
+    }
+}

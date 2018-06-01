@@ -1,0 +1,10 @@
+﻿<?xml version="1.0"?>
+<!-- 
+  Visual Studio global web project settings.
+-->
+<VisualWebDeveloper>
+
+  <comReferences>
+    <reference Name="interop.mmc20" ID="{8E80422B-CAC4-472B-B272-9635F1DFEF3B}\1.0\0"/>
+  </comReferences>
+</VisualWebDeveloper>

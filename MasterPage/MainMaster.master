@@ -1,0 +1,484 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="MainMaster.master.cs" Inherits="MasterPage_MainMaster" %>
+
+<%@ Register Src="~/UserControls/TaxCalculator.ascx" TagPrefix="uc1" TagName="TaxCalculator" %>
+<%@ Register Src="~/UserControls/discountcalc.ascx" TagPrefix="uc1" TagName="discountcalc" %>
+<%@ Register Src="~/UserControls/Interestcalc.ascx" TagPrefix="uc1" TagName="Interestcalc" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+
+    <title>Accounting System</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="author" content="" />
+    <link href="../Content/css/style.css" rel="stylesheet" />
+    <link href="../Content/css/chosen.css" rel="stylesheet" />
+
+    <script src="../Content/js/jquery.min.js"></script>
+    <%--<script src="../Content/js/jquery.searchabledropdown-1.0.8.min.js"></script>--%>
+    <%--<script src="../Content/js/jquery.sumoselect.min.js"></script>--%>
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body class="aside-collapsed">
+    <%--onkeydown="if(event.keyCode == 123) return false;" oncontextmenu="return false"--%>
+    <form id="form1" runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true"></asp:ScriptManager>
+        <div class="wrapper">
+            <asp:HiddenField ID="hfCompositionOpted" runat="server" Value="" />
+            <asp:HiddenField ID="hfUnregistered" runat="server" Value="" />
+            <nav role="navigation" class="navbar navbar-default navbar-top navbar-fixed-top">
+                <div class="navbar-header">
+                    <a href="../Defaults/Default.aspx" class="navbar-brand">
+                        <div class="brand-logo">
+                            <img src="../Content/img/IDAlogo.png" alt="App Logo" class="img-responsive" />
+                        </div>
+                        <div class="brand-logo-collapsed">
+                            <img src="../Content/img/IDAlogo-single.png" alt="App Logo" class="img-responsive" />
+                        </div>
+                    </a>
+                </div>
+                <div class="nav-wrapper text-center">
+                    <ul class="nav navbar-nav">
+                        <li>
+                            <a href="#" data-toggle-state="aside-collapsed" class="hidden-xs ham-nav2">
+                                <em class="fa fa-navicon"></em>
+                            </a>
+                        </li>
+                    </ul>   
+
+                    <asp:Label ID="lblOrgName" runat="server" CssClass="login_company_name" />
+                    <asp:Label ID="lblFinaYear" style="    font-size: 12px;margin: 0;padding: 0;float: none;position: absolute;    top: 40px;left: 50%;transform: translateX(-50%);padding-left: 180px;" runat="server" CssClass="login_company_name" />
+
+                    <ul class="nav navbar-nav">
+                        <li>
+                            <a href="#" data-toggle-state="aside-toggled aside-collapsed" class="visible-xs">
+                                <em class="fa fa-navicon"></em>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="../Logout.aspx" id="logout" title="Logout" class="text-center">
+                                <em class="fa fa-power-off" style="margin-top: -7px; display: block; font-size: 16px; margin-bottom: -39px;"></em>
+                                <span style="display: block; margin-top: 38px; font-size: 11px; text-align: center; margin-bottom: -25px;">Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <aside class="aside">
+                <!-- START Sidebar (left)-->
+                <nav class="sidebar scroll_gst">
+                    <div class="item user-block">
+                        <div class="user-block-info">
+                            <span class="user-block-name item-text userBlack">Welcome&nbsp;
+                                <asp:Label ID="lblUserName" runat="server" />
+                            </span>
+                            <span class="user-block-role userBlack" style="display: none;">Branch  : 
+                                    <asp:Label ID="lblBranch" runat="server" /></span>
+                            <span class="user-block-role userBlack">Financial Year  : 
+                                    <asp:Label ID="lblFinancialYr" runat="server" />
+                            </span>
+
+                        </div>
+                    </div>
+
+                    <nav>
+                        <ul class="nav2 nav-list main-nav2">
+                            <li class="list-item-1 has-submenu-nav2" id="liMaster" runat="server" visible="false">
+                                <a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#masters">
+                                    <i class="fa r fa-dot-circle-o nav2-fa"></i><span class="nav2-text">Master <i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">Master</span></a>
+                                <ul class="nav2 nav-list collapse scroll_gst" id="masters">
+                                    <li class="list-item-2"><a href="../AdminMasters/frmAccountHead.aspx" title="Account Head"><span>Account Head</span></a></li>
+                                    <li class="list-item-2"><a href="../AdminMasters/frmGroupMaster.aspx" title="Item Groups"><span>Item Groups</span></a></li>
+                                    <li class="list-item-2"><a href="../AdminMasters/frmItemMaster.aspx" title="Item Master"><span>Item Master</span></a></li>
+                                    <li class="list-item-2"><a href="../AdminMasters/frmOpenStockEntry.aspx" title="Item Master"><span>Opening Stock</span></a></li>
+                                    <%--<li class="list-item-2"><a href="../AdminMasters/frmNarrationMaster.aspx" title="Item Master"><span>Narration</span></a></li>--%>
+                                    <li class="list-item-2"><a href="../AdminMasters/frmSundries.aspx" title="For Sundries"><span>For Sundries</span></a></li>
+                                    <li class="list-item-2"><a href="../AdminMasters/frmBudgetYrActivation.aspx" title="Budget Year Activation"><span>Budget Year Activation</span></a></li>
+                                    <li id="liChequeSeries" class="list-item-2" visible="false" runat="server"><a href="../AdminMasters/frmChecqueSeries.aspx" title="Cheque Series"><span>Cheque Series</span></a></li>
+                                </ul>
+                            </li>
+
+                            <li class="list-item-1 has-submenu-nav2" id="liVoucher" runat="server" visible="false">
+                                <a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#vouchers">
+                                    <i class="fa r fa-bar-chart nav2-fa"></i><span class="nav2-text">Voucher <i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">Voucher</span></a>
+                                <ul class="nav2 nav-list collapse scroll_gst" id="vouchers">
+                                    <li id="liCashReceipt" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmCashReceipt.aspx" title="Cash Receipt"><span>Cash Receipt</span></a></li>
+                                    <li id="liCashPayment" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmCashPayment.aspx" title="Cash Payment"><span>Cash Payment</span></a></li>
+                                    <li id="liBankReceipt" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmBankReceipt.aspx" title="Bank Receipt"><span>Bank Receipt</span></a></li>
+                                    <li id="liBankPayment" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmBankPayment.aspx" title="Bank Payment"><span>Bank Payment</span></a></li>
+                                    <li id="liJournal" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmJournalVoucher.aspx" title="Journal"><span>Journal</span></a></li>
+                                    <li id="liPurchase" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmPurchase.aspx" title="Purchase"><span>Purchase</span></a></li>
+                                    <li id="liPurchaseReturn" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmPurchaseReturn.aspx" title="Purchase Return"><span>Purchase Return</span></a></li>
+                                    <li class="list-item-2 has-submenu-nav2"></li>
+
+
+                                    <li class="list-item-2 has-submenu-nav2" style="display: none;">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#Advance">Advance<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="Advance">
+                                            <li class="list-item-3"><a href="../Vouchers/frmSupplierAdvPayment.aspx" title="Supplier Payment"><span>Supplier Payment</span></a></li>
+                                            <li class="list-item-3"><a href="../Vouchers/frmSupplierAdvReceived.aspx" title="Customer Received"><span>Customer Received</span></a></li>
+                                        </ul>
+                                    </li>
+
+                                    <li id="liStockTransfer" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/frmStockTransfer.aspx" title="Stock Transfer"><span>Stock Transfer</span></a></li>
+
+                                </ul>
+                            </li>
+                            <li id="lipendingVouchers" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/FrmPendingVouchers.aspx" title="Pending Transaction"><i class="fa r fa-hourglass-half nav2-fa"></i><span class="nav2-text">Pending Transaction<i class="car fa fa-caret-down pull-right"></i></span></a></li>
+                            <%--<li id="lipendingVouchers" runat="server" visible="false" class="list-item-2"><a href="../Vouchers/FrmPendingVouchers.aspx" title="Pending Vouchers"><i class="fa r fa-hourglass-half nav2-fa"></i><span class="nav2-text">Pending Vouchers<i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">Pending Vouchers</span></a></li>--%>
+                            <li class="list-item-1 has-submenu-nav2" id="liReport" runat="server" visible="false">
+                                <a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#reports">
+                                    <i class="fa r fa-file-text nav2-fa"></i><span class="nav2-text">Reports <i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">Reports</span></a>
+                                <ul class="nav2 nav-list collapse scroll_gst" id="reports">
+                                    <li class="list-item-3"><a href="../Reports/FrmRptAccountHead.aspx" title="Account Head Master Report"><span>Account Head Master Report</span></a></li>
+                                    <li class="list-item-2 has-submenu-nav2" id="liBooks" runat="server" visible="true">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#Books">Books<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="Books">
+
+                                            <li class="list-item-2"><a href="../Reports/frmPDFCashbook.aspx" title="Cash Book"><span>Cash Book</span></a></li>
+
+                                              <li class="list-item-2"><a href="../Reports/frmPDFCashbook.aspx" title="Cash Book New"><span>New Cash Book </span></a></li>
+                                            <li class="list-item-2"><a href="../Reports/frmPDFBankbook.aspx" title="Bank Book"><span>Bank Book</span></a></li>
+
+                                            
+                                              <li class="list-item-2"><a href="../Reports/frmPDFBankbookNew.aspx" title="Cash Book New"><span>New Bank Book </span></a></li>
+                                            <li class="list-item-2"><a href="../Reports/FrmPurchaseRegisterReport.aspx" title="Purchase Register"><span>Purchase Register</span></a></li>
+
+                                             <li class="list-item-2"><a href="../Reports/FrmPurchaseRegisterNewReport.aspx" title="Purchase Register New"><span>New Purchase Register </span></a></li>
+
+                                            <li class="list-item-2" style="display: none;"><a href="../Reports/FrmCash_PurchaseRegister_Report.aspx" title="Cash Purchase Register"><span>Cash Purchase Register</span></a></li>
+                                            <li class="list-item-2"><a href="../Reports/FrmRptJVRegister.aspx" title="Journal Register"><span>Journal Register</span></a></li>
+                                            <li class="list-item-2"><a href="../Reports/FrmPurchaseReturnRegisterReport.aspx" title="Purchase Return Register"><span>Purchase Return Register</span></a></li>
+
+                                        </ul>
+                                    </li>
+
+                                    <li class="list-item-2 has-submenu-nav2" id="liLedger" runat="server" visible="true">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#ledger">Ledger<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="ledger">
+                                            <li class="list-item-3"><a href="../Reports/FrmAccountLedgerReport.aspx">Account Ledger</a></li>
+                                            <li class="list-item-3"><a href="../Reports/FrmGroupLedgerReport.aspx">Subsidairy Ledger</a></li>
+                                        </ul>
+                                    </li>
+
+
+
+                                    <li class="list-item-2 has-submenu-nav2" id="liFinalAccounts" runat="server" visible="true">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#FinalAccounts">Final Accounts<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="FinalAccounts">
+
+                                            <li class="list-item-2"><a href="../Reports/FrmSalesLedgerTrialBalance.aspx" title="Trial Balance"><span>Trial Balance</span></a></li>
+
+
+                                            <li class="list-item-2"><a href="../Reports/FrmBalanceSheetReport.aspx" title="Balance Sheet"><span>Balance Sheet,Profit & Loss A/c</span></a></li>
+
+
+
+                                            <li class="list-item-2"><a href="#" title="Cash Flow Statement"><span>Cash Flow Statement</span></a></li>
+
+                                            <li class="list-item-2"><a href="#" title="Fund Flow Statement"><span>Fund Flow Statement</span></a></li>
+
+                                        </ul>
+                                    </li>
+
+
+                                    <li class="list-item-2 has-submenu-nav2" id="liOthers" visible="true" runat="server">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#Others">Others<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="Others">
+
+                                            <li class="list-item-2 has-submenu-nav2">
+                                                <a class="accordion-heading" data-toggle="collapse" data-target="#Item">Item<i class="car fa fa-caret-down pull-right"></i></a>
+                                                <ul class="nav2 nav-list collapse scroll_gst" id="Item">
+
+                                                    <li class="list-item-2"><a href="../Reports/FrmItemMaster_Report.aspx" title="Item Master"><span>Item Master</span></a></li>
+
+
+                                                    <li class="list-item-2"><a href="../Reports/FrmItemLedger_Report.aspx" title="Stock Ledger"><span>Stock Ledger</span></a></li>
+
+                                                    <li class="list-item-2"><a href="../Reports/FrmItemClosingStock_Report.aspx" title="Closing Stock"><span>Closing Stock</span></a></li>
+
+
+                                                </ul>
+                                            </li>
+
+                                            <li class="list-item-2"><a href="../Reports/frmVoucherPrinting.aspx" title="Print Vouchers"><span>Voucher Printing</span></a></li>
+
+
+
+                                            <li class="list-item-2"><a href="../Reports/FrmSearchByAmtDate.aspx" title="Search By Date & Amount"><span>Search By Date & Amount</span></a></li>
+
+
+
+                                            <li class="list-item-2 has-submenu-nav2" id="liTaxReport" runat="server">
+                                                <a class="accordion-heading" data-toggle="collapse" data-target="#TaxReport">Tax Report<i class="car fa fa-caret-down pull-right"></i></a>
+                                                <ul class="nav2 nav-list collapse scroll_gst" id="TaxReport">
+
+                                                    <li class="list-item-2"><a href="#" title="Tax Report"><span>Tax Report</span></a></li>
+
+
+                                                    <li class="list-item-2"><a href="#" title="Income Tax Statement U/s 194"><span>Income Tax Statement U/s 194</span></a></li>
+
+                                                    <li class="list-item-2"><a href="#" title="Income Tax Certificate form no. 16 "><span>Income Tax Certificate Form no. 16</span></a></li>
+
+
+                                                </ul>
+                                            </li>
+
+                                        </ul>
+                                    </li>
+
+                                    <li class="list-item-3"><a href="../Reports/FrmRPTPendingTransaction.aspx" title="Pending Transaction"><span>Pending Transaction</span></a></li>
+                                </ul>
+                            </li>
+                            <li class="list-item-1 no-submenu" id="liMIS" runat="server" visible="false"><a href="#" class="li-heading navsctooltip  collapsed"><i class="fa r fa-forumbee nav2-fa"></i><span class="nav2-text">MIS</span><span class="navsctooltiptext">MIS</span></a></li>
+                            <li class="list-item-1 has-submenu-nav2" id="liGst" runat="server" visible="false"><a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#gstreturn"><i class="fa r fa-list-alt nav2-fa"></i><span class="nav2-text">GST Return <i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">GST Return</span></a>
+                                <ul class="nav2 nav-list collapse scroll_gst" id="gstreturn">
+                                    <li class="list-item-2"><a href="../GSTReturns/frmClientGstin.aspx" title="GSTIN"><span>GSTIN</span></a></li>
+                                    <li class="list-item-2"><a href="../GSTReturns/frmGSTR3B.aspx" title="3-B GSTR"><span>3-B GSTR</span></a></li>
+                                    <li class="list-item-2"><a href="../GSTReturns/frmRCMLiability.aspx" title="RCM Liability"><span>RCM Liability</span></a></li>
+                                    <li class="list-item-2"><a href="../GSTReturns/frmAdvanceLiability.aspx" title="Advance Liability"><span>Advance Liability</span></a></li>
+                                </ul>
+                            </li>
+                            <li class="list-item-1 has-submenu-nav2" id="liUtility" runat="server"
+                                visible="false">
+                                <a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#utitlity">
+                                    <i class="fa r fa-gears nav2-fa"></i><span class="nav2-text">Utility <i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">Utility</span></a>
+                                <ul class="nav2 nav-list collapse scroll_gst" id="utitlity">
+                                    <li class="list-item-2" id="liUserCreation" runat="server"><a href="../UserUtility/frmUserCreation.aspx" title="User Creation"><span>User Creation</span></a></li>
+                                    <li class="list-item-2" id="liUserRights" runat="server"><a href="../UserUtility/frmUserRights.aspx" title="User Rights"><span>User Rights</span></a></li>
+
+                                    <li class="list-item-2"><a href="../UserUtility/frmChangePassword.aspx" title="Change Password"><span>Change Password</span></a></li>
+                                    <li class="list-item-2"><a href="../UserUtility/Warehouse.aspx" title="Warehouse"><span>Warehouse</span></a></li>
+                                    <li class="list-item-2"><a href="../UserUtility/frmAddGSTIN.aspx" title="Add GSTIN"><span>Add GSTIN</span></a></li>
+                                    <li class="list-item-2"><a href="../UserUtility/frmBRS.aspx" title="BRS"><span>Bank BRS</span></a></li>
+                                    <li class="list-item-2"><a href="../UserUtility/frmBrsOpeningBalDiff.aspx" title="Op. Difference Entry"><span>Op. Difference Entry</span></a></li>
+                                    <li class="list-item-2"><a href="../UserUtility/frmGstinDetails.aspx" title="GSTIN Details"><span>GSTIN Details</span></a></li>
+                                    <li class="list-item-2"><a href="../UserUtility/frmYearActivation.aspx" title="New Year Activation"><span>New Year Activation</span></a></li>
+                                    <li class="list-item-2"><a href="../UserUtility/FrmOldBalance.aspx" title="Old Balances"><span>Old Balances</span></a></li>
+
+                                    <li class="list-item-2 has-submenu-nav2">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#FD">FD<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="FD">
+                                            <li class="list-item-3"><a href="../UserUtility/FrmFDEntry.aspx" title="FD Entry"><span>FD Entry</span></a></li>
+                                            <li class="list-item-3"><a href="../UserUtility/FrmFDCalculator.aspx" title="FD Calculator"><span>FD Calculator</span></a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="list-item-1 has-submenu-nav2" id="liModification" runat="server" visible="false">
+                                <a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#modification">
+                                    <i class="fa r fa-edit nav2-fa"></i><span class="nav2-text">Modification <i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">Modification</span></a>
+                                <ul class="nav2 nav-list collapse scroll_gst" id="modification">
+                                    <li class="list-item-2" id="liUpdateProfile" runat="server"><a href="../Modifiaction/frmUpdateProfileCreation.aspx" title="Profile"><span>Profile</span></a></li>
+                                    <li class="list-item-2 has-submenu-nav2" id="liMasterUpdate" runat="server">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#modification_master">Master<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="modification_master">
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdateAccountHead.aspx" title="Account Head"><span>Account Head</span></a></li>
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdateItemMaster.aspx" title="Item Master"><span>Item Master</span></a></li>
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdGroupMaster.aspx" title="Item Groups"><span>Item Groups</span></a></li>
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdNarrationMaster.aspx" title="Narration"><span>Narration</span></a></li>
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdWarehouse.aspx" title="Warehouse"><span>Warehouse</span></a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="list-item-2 has-submenu-nav2" id="liVoucherUpdate" runat="server">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#modification_voucher">Voucher<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst " id="modification_voucher">
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdCashReceipt.aspx" title="Cash Receipt"><span>Cash Receipt</span></a></li>
+                                            <%--<li class="list-item-3"><a href="../Modifiaction/frmUpdCashPayment.aspx" title="Cash Payment"><span>Cash Payment</span></a></li>--%>
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdBankReceipt.aspx" title="Bank Receipt"><span>Bank Receipt</span></a></li>
+                                            <%--<li class="list-item-3"><a href="../Modifiaction/frmUpdBankPayment.aspx" title="Bank Payment"><span>Bank Payment</span></a></li>--%>
+                                            <li class="list-item-2"><a href="../Modifiaction/frmUpdateJournalVoucher.aspx" title="Journal"><span>Journal</span></a></li>
+                                            <%--<li class="list-item-3"><a href="../Modifiaction/UpdPurchase.aspx" title="Purchase"><span>Purchase</span></a></li>--%>
+                                            <li class="list-item-3"><a href="../Modifiaction/frmUpdPurchaseReturn.aspx" title="Purchase Return"><span>Purchase Return</span></a></li>
+                                            <li class="list-item-3 has-submenu-nav3" style="display: none;">
+                                                <a class="accordion-heading" data-toggle="collapse" data-target="#MAdvance">Advance<i class="car fa fa-caret-down pull-right"></i></a>
+                                                <ul class="nav2 nav-list collapse scroll_gst" id="MAdvance">
+                                                    <li class="list-item-4"><a href="../Modifiaction/frmUpdSupplierAdvancePayment.aspx" title="Supplier Payment"><span>Supplier Payment</span></a></li>
+                                                    <li class="list-item-4"><a href="../Modifiaction/frmUpdSuppAdvReceived.aspx" title="Customer Received"><span>Customer Received</span></a></li>
+                                                </ul>
+                                            </li>
+                                            <li class="list-item-2"><a href="../Modifiaction/frmUpdStockTransfer.aspx" title="Stock Transfer"><span>Stock Transfer</span></a></li>
+
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="list-item-1 has-submenu-nav2" id="liCalculator" runat="server" visible="false">
+                                <a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#Calclulators">
+                                    <i class="fa r fa-calculator nav2-fa"></i><span class="nav2-text">Calculator</span><span class="navsctooltiptext">Calculator</span></a>
+                                <ul class="nav2 nav-list collapse" id="Calclulators">
+                                    <li class="list-item-2"><a href="#ModalCalc" data-toggle="modal" title="Tax Calculator"><span>Tax Calculator</span></a></li>
+                                    <li class="list-item-2"><a href="#ModalDisCalc" data-toggle="modal" title="Discount Calculator"><span>Discount Calculator</span></a></li>
+                                    <li class="list-item-2"><a href="#ModalInterestCalc" data-toggle="modal" title="Interest Calculator"><span>Interest Calculator</span></a></li>
+                                </ul>
+                            </li>
+
+
+                            <li class="list-item-1 has-submenu-nav2" id="liBudget" runat="server" visible="false">
+                                <a class="accordion-heading li-heading navsctooltip" data-toggle="collapse" data-target="#Budget">
+                                    <i class="fa r fa-dot-circle-o nav2-fa"></i><span class="nav2-text">Budget <i class="car fa fa-caret-down pull-right"></i></span><span class="navsctooltiptext">Budget</span></a>
+                                <ul class="nav2 nav-list collapse scroll_gst" id="Budget">
+                                    <li class="list-item-2 has-submenu-nav2" id="liBudgetMaster" runat="server" visible="false">
+                                        <a class="accordion-heading" data-toggle="collapse" data-target="#BudgetMaster">Budget Master<i class="car fa fa-caret-down pull-right"></i></a>
+                                        <ul class="nav2 nav-list collapse scroll_gst" id="BudgetMaster">
+
+                                            <li class="list-item-3"><a href="../BudgetMasters/frmBudgetGroup.aspx" title="Budget Group"><span>Budget Group</span></a></li>
+                                            <li class="list-item-3"><a href="../BudgetMasters/frmBudgetSubSection.aspx" title="Cost Centre"><span>Cost Centre</span></a></li>
+                                            <li class="list-item-3"><a href="../BudgetMasters/frmBudgetOpeningBlc.aspx" title="Opening Balance"><span>Opening Balance</span></a></li>
+                                            <li class="list-item-3"><a href="../UserUtility/FrmBudgetRights.aspx" title="Budget Assign"><span>Budget Assign</span></a></li>
+
+                                        </ul>
+                                    </li>
+
+                                    <li class="list-item-2" id="liBudgetTransaction" visible="false" runat="server"><a href="../BudgetTransaction/NewfrmBudgetAmount.aspx" title="Budget Transaction"><span>Budget Transaction</span></a></li>
+
+                                    <li class="list-item-3"><a href="../Reports/FrmRptSectionWise.aspx" title="Budget Reports"><span>Budget Reports</span></a></li>
+
+
+                                </ul>
+                            </li>
+
+
+                        </ul>
+
+                    </nav>
+                </nav>
+                <!-- END Sidebar (left)-->
+            </aside>
+            <div class="wrapper">
+                <section class="section_loader">
+                    <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                    </asp:ContentPlaceHolder>
+                </section>
+            </div>
+        </div>
+        <uc1:TaxCalculator runat="server" ID="TaxCalculator" />
+        <uc1:discountcalc runat="server" ID="discountcalc" />
+        <uc1:Interestcalc runat="server" ID="Interestcalc" />
+
+        <div class="modal fade" id="ModalInfo" role="dialog" data-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header" id="header">
+                        <button type="button" class="close hidden" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title" id="title"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <h4><i class="fa fa-exclamation-circle"></i>&nbsp; <span id="txtMsg" style="display: inline-table; font-size: 15px;"></span></h4>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-primary" href="#" id="btnYes">Yes</a>
+                        <button type="button" class="btn btn-default  hidden" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroller">
+        </div>
+
+        <script src="../Content/js/bootstrap.min.js"></script>
+        <script src="../Content/js/jquery-ui.js"></script>
+        <script src="../Content/js/chosen.jquery.js"></script>
+        <script src="../Content/js/app.js"></script>
+        <script src="../Content/js/index.js"></script>
+        <script>
+            //function Redirect(a, b) {
+
+            //    var CompositionOpted = document.getElementById('hfCompositionOpted').value;
+            //    var Unregistered = document.getElementById('hfUnregistered').value;
+            //    //for Composition Form 
+            //    if (CompositionOpted == 1) {
+            //        if (a == 'Entry' && b == 'Credit') {
+            //            window.location = "../Vouchers/frmCompositionCreditSale.aspx";
+            //        }
+            //        else if (a == 'Update' && b == 'Credit') {
+            //            window.location = "../Modifiaction/frmUpdCompositionCreditSales.aspx";
+
+            //        }
+            //        else if (a == 'Entry' && b == 'Cash') {
+            //            window.location = "../Vouchers/frmCompositionCashSale.aspx";
+            //        }
+            //        else if (a == 'Update' && b == 'Cash') {
+            //            window.location = "../Modifiaction/frmUpdCompositionCashSale.aspx";
+            //        }
+            //    }
+            //    else if (CompositionOpted == 0) {
+            //        if (a == 'Entry' && b == 'Cash') {
+            //            window.location = "../Vouchers/frmCashSalesVoucher.aspx";
+            //        }
+            //        else if (a == 'Update' && b == 'Cash') {
+            //            window.location = "../Modifiaction/frmUpdCashSale.aspx";
+
+            //        }
+            //        else if (a == 'Entry' && b == 'Credit') {
+            //            window.location = "../Vouchers/frmSales.aspx";
+            //        }
+            //        else if (a == 'Update' && b == 'Credit') {
+            //            window.location = "../Modifiaction/frmUpdSales.aspx";
+            //        }
+            //    }
+
+            //    //for Unregistered Form 
+            //    if (Unregistered == 1) {
+            //        if (a == 'Entry' && b == 'Purchase') {
+            //            window.location = "../Vouchers/frmCompositionPurchase.aspx";
+            //        } else if (a == 'Update' && b == 'Purchase') {
+            //            window.location = "../Modifiaction/frmUpdCompositionPurchase.aspx";
+            //        } else if (a == 'Entry' && b == 'Credit') {
+            //            window.location = "../Vouchers/frmCompositionCreditSale.aspx";
+            //        }
+            //        else if (a == 'Update' && b == 'Credit') {
+            //            window.location = "../Modifiaction/frmUpdCompositionCreditSales.aspx";
+            //        }
+            //        else if (a == 'Entry' && b == 'Cash') {
+            //            window.location = "../Vouchers/frmCompositionCashSale.aspx";
+            //        }
+            //        else if (a == 'Update' && b == 'Cash') {
+            //            window.location = "../Modifiaction/frmUpdCompositionCashSale.aspx";
+            //        }
+
+            //    } else if (Unregistered == 0) {
+
+            //        if (a == 'Entry' && b == 'Purchase') {
+            //            window.location = "../Vouchers/frmPurchase.aspx";
+            //        } else if (a == 'Update' && b == 'Purchase') {
+            //            window.location = "../Modifiaction/UpdPurchase.aspx";
+            //        }
+            //    }
+            //}
+
+            $(document).ready(function () {
+                $('.nav-list').removeClass('in');
+            });
+            $(".chzn-select").chosen();
+            $(".chzn-select-deselect").chosen({ allow_single_deselect: true });
+
+            //function ValidateGUID() {
+            //    debugger
+            //    PageMethods.ValidGstin(onSucess, onError);
+            //    function onSucess(res) {debugger
+            //        if (a == 'True') {
+            //            return true;
+            //        } else {
+            //            window.location.href = "../Logout.aspx";
+            //            return false;
+            //        }
+            //    }
+            //    function onError(res) {debugger
+            //    }                
+            //}
+        </script>
+        <%--<div class="loading"></div>--%>
+    </form>
+</body>
+</html>
