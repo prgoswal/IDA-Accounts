@@ -13,7 +13,7 @@ public partial class DemoRegistration : System.Web.UI.Page
     {
         
     }
-
+//btn submit code
     protected void btnSubmit_Click(object sender, EventArgs e)
     {
        
@@ -98,11 +98,11 @@ public partial class DemoRegistration : System.Web.UI.Page
             }
         }
         catch (Exception ex)
-        {
+        {// when any runtime error accoured.
             ShowMessage("There Was Error Please Try Again.",false);
         }
     }
-// this function send mails according to the 
+// this function send mails according to the mailing System.
     bool SendEmailAndMessage()
     {
         try
