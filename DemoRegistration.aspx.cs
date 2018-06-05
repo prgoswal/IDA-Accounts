@@ -102,7 +102,7 @@ public partial class DemoRegistration : System.Web.UI.Page
             ShowMessage("There Was Error Please Try Again.",false);
         }
     }
-
+// this function send mails according to the 
     bool SendEmailAndMessage()
     {
         try
