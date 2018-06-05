@@ -59,7 +59,7 @@ public partial class BudgetTransaction_frmBudgetAmount : System.Web.UI.Page
         get { return (int)ViewState["SubSectionID"]; }
         set { ViewState["SubSectionID"] = value; }
     }
-
+//chnages in the budget form.
     int BudgetHeadID
     {
         get { return (int)ViewState["BudgetHeadID"]; }
